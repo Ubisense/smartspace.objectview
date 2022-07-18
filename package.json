@@ -1,0 +1,23 @@
+{
+  "name": "@rcurwen/objectview",
+  "version": "1.0.0",
+  "description": "Ubisense ObjectView client side library",
+  "main": "ObjectView.js",
+  "scripts": {
+    "test": "exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rcurwen/objectview.git"
+  },
+  "keywords": [
+    "Ubisense",
+    "ObjectView"
+  ],
+  "author": "Ubisense Limited",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/rcurwen/objectview/issues"
+  },
+  "homepage": "https://github.com/rcurwen/objectview#readme"
+}
