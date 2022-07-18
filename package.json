@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/rcurwen/objectview/issues"
   },
-  "homepage": "https://github.com/rcurwen/objectview#readme"
+  "homepage": "https://github.com/rcurwen/objectview#readme",
+  "publishConfig": {
+    "@rcurwen:registry": "https://npm.pkg.github.com"
+  }
 }
