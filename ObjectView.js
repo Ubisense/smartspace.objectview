@@ -408,4 +408,4 @@ const ObjectView = class ObjectView {
 
 };
 
-export { ObjectView };
+module.exports = ObjectView;
