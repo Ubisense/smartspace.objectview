@@ -1,6 +1,6 @@
 {
   "name": "@rcurwen/objectview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Ubisense ObjectView client side library",
   "main": "ObjectView.js",
   "scripts": {

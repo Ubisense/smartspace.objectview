@@ -36,6 +36,8 @@
 
 const signalR = require('@microsoft/signalr');
 
+// Class used to define how to subscribe to a view in this client: the view and optional cell,
+// the callbacks on changes, and the optional target object where the view contents will be cached.
 class ViewDef {
 
     _view = undefined;
@@ -237,6 +239,8 @@ const ObjectView = class ObjectView {
     }
 
     // Constructor tags the view name, an optional cell, and optional target object to populate with the view documents.
+    // Construct with useAnon true if you want to be able to cache views that are exposed to anonymous users. This will
+    // use the unauthenticated SignalR hub.
     constructor(useAnon) {
 
         let hub = useAnon ? '/SmartSpace/ObjectViewAnon' : '/SmartSpace/ObjectView';
@@ -253,6 +257,7 @@ const ObjectView = class ObjectView {
         });
     }
 
+    // Connect to the SignalR hub.  Use subsribe after connecting to cache or receive events from a view.
     connect() {
         this._reconnecting = false;
 
