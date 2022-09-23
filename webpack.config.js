@@ -8,7 +8,7 @@ export default  {
         path: path.resolve(__dirname, './dist'),
         filename: 'ObjectView.js',
         library: {
-            type: 'commonjs-static'
+            type: 'module'
         }
     },
     experiments: {

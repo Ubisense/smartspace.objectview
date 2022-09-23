@@ -34,7 +34,7 @@
 
 /*  This library is maintained on github, so look there for more recent versions. */
 
-const signalR = require('@microsoft/signalr');
+import { HubConnectionState, HubConnectionBuilder } from '@microsoft/signalr';
 
 // Class used to define how to subscribe to a view in this client: the view and optional cell,
 // the callbacks on changes, and the optional target object where the view contents will be cached.
@@ -222,7 +222,7 @@ class ViewDef {
     }
 }
 
-const ObjectView = class ObjectView {
+export default class ObjectView {
 
     #errorCallback = undefined;
 
@@ -245,7 +245,7 @@ const ObjectView = class ObjectView {
 
         let hub = useAnon ? '/SmartSpace/ObjectViewAnon' : '/SmartSpace/ObjectView';
         console.log(hub);
-        this._connection = new signalR.HubConnectionBuilder()
+        this._connection = new HubConnectionBuilder()
             .withUrl(hub)
             .build();
 
@@ -261,7 +261,7 @@ const ObjectView = class ObjectView {
     connect() {
         this._reconnecting = false;
 
-        if (this._connection.state === signalR.HubConnectionState.Connected) {
+        if (this._connection.state === HubConnectionState.Connected) {
             this.#registerAll();
             return;
         }
@@ -287,7 +287,7 @@ const ObjectView = class ObjectView {
     subscribe(def) {
         var k = this.#getKey(def._view, def._cell);
         this._views[k] = def;
-        if (this._connection.state === signalR.HubConnectionState.Connected) {
+        if (this._connection.state === HubConnectionState.Connected) {
             this.#registerView(def);
         }
     }
@@ -412,5 +412,3 @@ const ObjectView = class ObjectView {
     }
 
 };
-
-module.exports = ObjectView;
