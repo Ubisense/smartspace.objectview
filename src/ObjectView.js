@@ -1,4 +1,4 @@
-const signalR = require("@microsoft/signalr");
+import { HubConnectionState, HubConnectionBuilder } from '@microsoft/signalr';
 
 class ViewDef {
   _view = undefined;
@@ -383,7 +383,7 @@ class ViewDef {
   }
 }
 
-const ObjectView = class ObjectView {
+export default class ObjectView {
   #errorCallback = undefined;
 
   _connected_cb = undefined;
@@ -406,7 +406,7 @@ const ObjectView = class ObjectView {
 
   // Constructor tags the view name, an optional cell, and optional target object to populate with the view documents.
   constructor() {
-    this._connection = new signalR.HubConnectionBuilder()
+    this._connection = new HubConnectionBuilder()
       .withUrl("/SmartSpace/ObjectView")
       .build();
 
@@ -419,7 +419,7 @@ const ObjectView = class ObjectView {
   }
 
   connect() {
-    if (this._connection.state === signalR.HubConnectionState.Connected) {
+    if (this._connection.state === HubConnectionState.Connected) {
       this.#registerAll();
       return;
     }
@@ -445,7 +445,7 @@ const ObjectView = class ObjectView {
   subscribe(def) {
     var k = this.#getKey(def._view, def._cell);
     this._views[k] = def;
-    if (this._connection.state === signalR.HubConnectionState.Connected) {
+    if (this._connection.state === HubConnectionState.Connected) {
       this.#registerView(def);
     }
   }
@@ -599,5 +599,3 @@ const ObjectView = class ObjectView {
     return (view ?? "") + ":" + (cell ?? "");
   };
 };
-
-export { ObjectView };
