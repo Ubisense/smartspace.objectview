@@ -1,4 +1,38 @@
+/**
+ * @preserve
+ * The copyright in this software is being made available under the 2-clauses
+ * BSD License, included below. This software may be subject to other third
+ * party and contributor rights, including patent rights, and no such rights
+ * are granted under this license.
+ *
+ * Copyright (c) 2022, Ubisense Limited
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS `AS IS'
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 import { HubConnectionState, HubConnectionBuilder } from '@microsoft/signalr';
+import { IdCreator } from './IdCreator.js';
 
 class ViewDef {
   _view = undefined;
@@ -18,6 +52,11 @@ class ViewDef {
 
   setCell(cell) {
     this._cell = cell;
+    return this;
+  }
+
+  setFallbackCell() {
+    this._cell = '000004000000000000000000000:ULocation::Cell';
     return this;
   }
 
@@ -197,7 +236,7 @@ class ViewDef {
     return result;
   }
 
-  _copyFields(object_values)
+  _copyFields(object_values) 
   {
     if (this._field_map === undefined) {
       throw "attempt to copy fields of a non-updateable view";
@@ -205,14 +244,14 @@ class ViewDef {
     var result = {};
     // If a value has fields then copy each field, 
     // otherwise just copy the entire scalar value
-    var copy_value = (source,fields) => {
+    var copy_value = (source, fields) => {
       if (fields.length == 0)
-        return source ;
-      var result = {} ;
-      for (var i = 0 ; i < fields.length ; ++i) {
-        result[fields[i]] = source[fields[i]] ;
+        return source;
+      var result = {};
+      for (var i = 0; i < fields.length; ++i) {
+        result[fields[i]] = source[fields[i]];
       }
-      return result ;
+      return result;
     }
     // For each field mentioned in the field map,
     for (const [field_name, accessor] of Object.entries(this._field_map)) {
@@ -220,7 +259,7 @@ class ViewDef {
       // If this field name is missing in the source data then ignore it
       if (source === undefined) continue;
       // If the field has subfields then get their names
-      var subfield_names = [] ;
+      var subfield_names = [];
       for (var i = 1; i < accessor.length; ++i) {
         if (accessor[i][0] == 4) {
           subfield_names.push(accessor[i][1]);
@@ -228,12 +267,12 @@ class ViewDef {
       }
       // If the field is an array then copy make a copy of it 
       if (Array.isArray(source)) {
-        result[field_name] = [] ;
-        for (var i = 0 ; i < source.length ; ++i) {
-          result[field_name].push(copy_value(source[i],subfield_names));
+        result[field_name] = [];
+        for (let i = 0; i < source.length; ++i) {
+          result[field_name].push(copy_value(source[i], subfield_names));
         }
       } else {
-        result[field_name] = copy_value(source,subfield_names);
+        result[field_name] = copy_value(source, subfield_names);
       }
     }
     return result;
@@ -383,6 +422,12 @@ class ViewDef {
   }
 }
 
+
+/**
+ * The ObjectView api for connecting to views defined in SmartSpace.
+ * @export
+ * @class ObjectView
+ */
 export default class ObjectView {
   #errorCallback = undefined;
 
@@ -404,10 +449,26 @@ export default class ObjectView {
     return view_target._view_def()._copyFields(view_target[id]);
   }
 
-  // Constructor tags the view name, an optional cell, and optional target object to populate with the view documents.
-  constructor() {
+
+  /**
+   * Creates an instance of ObjectView.
+   * @param {boolean|string} anonOrAddress Boolean true means allow anonymous accces, false means require authentication.
+   * Otherwise you can pass a string to attempt to connect to a different hub.
+   * @memberof ObjectView
+   */
+  constructor(anonOrAddress) {
+
+    let hub;
+    if (typeof anonOrAddress == "boolean") {
+      hub = anonOrAddress ? '/SmartSpace/ObjectViewAnon' : '/SmartSpace/ObjectView';
+    }
+    else {
+      if (anonOrAddress) hub = anonOrAddress;
+      else hub = '/SmartSpace/ObjectView';
+    }
+
     this._connection = new HubConnectionBuilder()
-      .withUrl("/SmartSpace/ObjectView")
+      .withUrl(hub)
       .build();
 
     // Create a function that the hub can call to send change messages.
@@ -459,13 +520,25 @@ export default class ObjectView {
     }
   }
 
+  static #creator = new IdCreator();
+
+  /**
+   * Create a new unique object instance of the given type.
+   * @param {string} type The raw type name in SmartSpace, e.g. "UserDataModel::[Custom]Product"
+   * @memberof ObjectView
+   * @returns {string} the unique object id
+   */
+  static createObject(type) {
+    return ObjectView.#creator.generate() + ":" + type;
+  }
+
   // Async method to commit a set of changes, represented as
   // [{property:<UDM property name>, args:[arg0,..]}, value:arg]
   async commitChanges(params) {
     if (params.length == 0) {
       return false;
     }
-    params = JSON.stringify(params); 
+    params = JSON.stringify(params);
     var response = await this._connection.invoke(
       "Execute",
       "Commit_Changes",
@@ -473,8 +546,8 @@ export default class ObjectView {
     );
     var result = JSON.parse(response);
     if (!(result["error"] === undefined))
-        throw result ;
-    return result ;
+      throw result;
+    return result;
   }
 
   // Async method to get cells covering a given region.
@@ -508,7 +581,7 @@ export default class ObjectView {
     view._field_map = undefined;
     view._owner = this;
     this.getFieldMap(view._view)
-        .then((res) => (view._field_map = res["field_map"]));
+      .then((res) => (view._field_map = res["field_map"]));
   };
 
   #viewEvent = function (view, message) {
@@ -598,4 +671,4 @@ export default class ObjectView {
   #getKey = function (view, cell) {
     return (view ?? "") + ":" + (cell ?? "");
   };
-};
+}
