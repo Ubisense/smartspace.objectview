@@ -398,20 +398,20 @@ class ViewDef {
         if (doc) {
           if (v.idx == undefined) {
             // Not an array-valued property.
-            delete doc[v.prop];
+            doc[v.prop] = undefined;
           } else {
             // For an array, splice to delete the index.
             doc[v.prop].splice(v.idx, 1);
             // Remove an empty array.
             if (doc[v.prop].length == 0) {
-              delete doc[v.prop];
+              doc[v.prop] = undefined;
               //view[v._id] = doc;
             }
           }
 
           // Remove an empty object document.
           if (Object.keys(doc).length === 0) {
-            delete view[v._id];
+            view[v._id] = undefined;
           }
         }
       }
