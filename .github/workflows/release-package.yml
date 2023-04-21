@@ -33,3 +33,23 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  # To publish to nodejs as well, we temporarily edit the publishConfig to use the nodejs registry, and then publish with public access.
+  publish-nodejs:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: ./node_modules/.bin/json -I -f package.json -e 'this.publishConfig["@ubisense:registry"]="https://registry.npmjs.org/"'
+      - run: npm run build
+      - run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

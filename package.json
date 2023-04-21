@@ -1,6 +1,6 @@
 {
   "name": "@ubisense/objectview",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Ubisense ObjectView client side library",
   "main": "dist/ObjectView.js",
   "scripts": {
@@ -34,7 +34,8 @@
     "babel-loader": "^8.2.5",
     "rimraf": "^3.0.2",
     "webpack": "^5.73.0",
-    "webpack-cli": "^4.10.0"
+    "webpack-cli": "^4.10.0",
+    "json": "^11.0.0"
   },
   "type": "module"
 }

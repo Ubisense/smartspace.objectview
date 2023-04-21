@@ -28,7 +28,8 @@ jobs:
           node-version: 12
           registry-url: https://registry.npmjs.org
       - run: npm ci
+      - run: ./node_modules/.bin/json -I -f package.json -e 'this.publishConfig["@ubisense:registry"]="https://registry.npmjs.org/"'
       - run: npm run build
-      - run: npm publish 
+      - run: npm publish --access=public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
