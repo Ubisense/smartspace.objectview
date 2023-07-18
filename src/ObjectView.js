@@ -34,6 +34,8 @@
 import { HubConnectionState, HubConnectionBuilder } from '@microsoft/signalr';
 import { IdCreator } from './IdCreator.js';
 
+const fallbackCell = '000004000000000000000000000:ULocation::Cell';
+
 class ViewDef {
   _view = undefined;
   _cell = undefined;
@@ -47,16 +49,16 @@ class ViewDef {
 
   constructor(view, cell) {
     this._view = view;
-    this._cell = cell;
+    this._cell = this._normalizeCell(cell);
   }
 
   setCell(cell) {
-    this._cell = cell;
+    this._cell = this._normalizeCell(cell);
     return this;
   }
 
   setFallbackCell() {
-    this._cell = '000004000000000000000000000:ULocation::Cell';
+    this._cell = fallbackCell;
     return this;
   }
 
@@ -80,6 +82,14 @@ class ViewDef {
   onChange(cb) {
     this._change_cb = cb;
     return this;
+  }
+
+  _normalizeCell(cell) {
+    if (!cell) return cell;
+    let l = cell.toLowerCase();
+    if (l == 'fallback') return fallbackCell;
+    else if (l == 'site') return 'site';
+    return cell;
   }
 
   _changeCommands(id, new_values, old_values) {
@@ -594,8 +604,11 @@ export default class ObjectView {
   };
 
   // Called when connection is made or on establish.
-  #registerAll = function () {
+  #registerAll = async function () {
     if (this._connected_cb) this._connected_cb();
+
+    // Get the site cell on first connection.
+    await this.#getSiteCell();
 
     // Register each view.
     for (var v in this._views) {
@@ -663,12 +676,36 @@ export default class ObjectView {
 
     var k = this.#getKey(v, c);
     var def = this._views[k];
+    if (!def) {
+      // Try mapping to shortcut site cell.
+      if (c == this._siteCell) {
+        k = this.#getKey(v, 'site');
+        def = this._views[k];
+      }
+    }
     if (!def) return;
 
     def._applyChanges(m);
   };
 
+  #mapCell = function (c)
+  {
+  };
+
   #getKey = function (view, cell) {
     return (view ?? "") + ":" + (cell ?? "");
   };
+
+  #getSiteCell = async function () {
+    const large = 1e16;
+    let cells = await this.getCells({ type: 'Polygon', coordinates: [[[-large, -large], [large, -large], [large, large], [-large, large]]] });
+    for (var f of cells.features) {
+      let p = f.properties;
+      if (p && p.level == 3) {
+        this._siteCell = p.id;
+      }
+    }
+  };
 }
+  
+
