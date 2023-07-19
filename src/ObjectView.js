@@ -688,10 +688,6 @@ export default class ObjectView {
     def._applyChanges(m);
   };
 
-  #mapCell = function (c)
-  {
-  };
-
   #getKey = function (view, cell) {
     return (view ?? "") + ":" + (cell ?? "");
   };
