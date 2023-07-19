@@ -246,8 +246,7 @@ class ViewDef {
     return result;
   }
 
-  _copyFields(object_values) 
-  {
+  _copyFields(object_values) {
     if (this._field_map === undefined) {
       throw "attempt to copy fields of a non-updateable view";
     }
@@ -294,12 +293,6 @@ class ViewDef {
       this._sequence = dump.seq;
       delete dump.seq;
 
-      // Make a reference back to the view definition to support the
-      // ObjectView.set and ObjectView.change functions.
-      dump._view_def = () => {
-        return this;
-      };
-
       if (this._target) {
         if (this._prop) {
           // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.
@@ -308,8 +301,10 @@ class ViewDef {
             this._target[this._prop],
             dump
           );
+          this._attachViewDef(this._target[this._prop]);
         } else {
           this._target = dump;
+          this._attachViewDef(this._target);
         }
       }
     } else {
@@ -320,6 +315,16 @@ class ViewDef {
     if (res.changes) this._applyChanges(JSON.parse(res.changes));
 
     if (this._establish_cb) this._establish_cb(res);
+  }
+
+  _attachViewDef(target) {
+    // Make a reference back to the view definition to support the
+    // ObjectView.set and ObjectView.change functions.  
+    // Make it not enumerable, so it isn't returned when iterating through the object keys.      
+    Object.defineProperty(target, "_view_def", { enumerable: false, writable: true });
+    target._view_def = () => {
+      return this;
+    };
   }
 
   _applyChanges(m) {
@@ -703,5 +708,5 @@ export default class ObjectView {
     }
   };
 }
-  
+
 
