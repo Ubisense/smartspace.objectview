@@ -292,7 +292,6 @@ class ViewDef {
       const dump = JSON.parse(res.contents);
       this._sequence = dump.seq;
       delete dump.seq;
-
       if (this._target) {
         if (this._prop) {
           // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.
@@ -301,10 +300,9 @@ class ViewDef {
             this._target[this._prop],
             dump
           );
-          this._attachViewDef(this._target[this._prop]);
+          this._attachViewDef(this._target[this._prop]);          
         } else {
-          this._target = dump;
-          this._attachViewDef(this._target);
+          this._cloneInto(this._target, dump);
         }
       }
     } else {
@@ -315,6 +313,21 @@ class ViewDef {
     if (res.changes) this._applyChanges(JSON.parse(res.changes));
 
     if (this._establish_cb) this._establish_cb(res);
+  }
+
+  _cloneInto(target, dump) {
+    // Make the properties of target match dump.
+    let ds = [];
+    for (const key of Object.keys(target)) {
+      if (!Object.prototype.hasOwnProperty.call(dump,key)) ds.push(key);
+    }
+    for (const [key, value] of Object.entries(dump)) {
+      target[key] = value;
+    }
+    for (const key of ds) {
+      delete target[key];
+    }
+    this._attachViewDef(target);
   }
 
   _attachViewDef(target) {
@@ -401,10 +414,13 @@ class ViewDef {
 
           // Add to the view.
           if (this._prop) {
-            // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.
+            // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.  
+            // This may not be necessary with Vue3 ref that have deep reactivity.
             let toAdd = {};
             toAdd[v._id] = doc;
             this._target[this._prop] = Object.assign({}, view, toAdd);
+            // Re-attach view def to the copied view.
+            this._attachViewDef(this._target[this._prop]);
           } else {
             view[v._id] = doc;
           }
@@ -414,19 +430,21 @@ class ViewDef {
           if (v.idx == undefined) {
             // Not an array-valued property.
             doc[v.prop] = undefined;
+            delete doc[v.prop];
           } else {
             // For an array, splice to delete the index.
             doc[v.prop].splice(v.idx, 1);
             // Remove an empty array.
             if (doc[v.prop].length == 0) {
               doc[v.prop] = undefined;
-              //view[v._id] = doc;
+              delete doc[v.prop];
             }
           }
 
           // Remove an empty object document.
           if (Object.keys(doc).length === 0) {
             view[v._id] = undefined;
+            delete view[v._id];
           }
         }
       }
