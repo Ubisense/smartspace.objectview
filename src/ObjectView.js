@@ -706,7 +706,14 @@ export default class ObjectView {
         def = this._views[k];
       }
     }
-    if (!def) return;
+    if (!def) {
+       // Try the empty cell.
+       k = this.#getKey(v);
+       def = this._views[k];
+    }
+    if (!def) {
+      return;
+    }
 
     def._applyChanges(m);
   };

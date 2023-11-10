@@ -1,6 +1,6 @@
 {
   "name": "@ubisense/smartspace.objectview",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Ubisense ObjectView client side library",
   "main": "dist/ObjectView.js",
   "scripts": {
