@@ -300,7 +300,7 @@ class ViewDef {
             this._target[this._prop],
             dump
           );
-          this._attachViewDef(this._target[this._prop]);          
+          this._attachViewDef(this._target[this._prop]);
         } else {
           this._cloneInto(this._target, dump);
         }
@@ -319,7 +319,7 @@ class ViewDef {
     // Make the properties of target match dump.
     let ds = [];
     for (const key of Object.keys(target)) {
-      if (!Object.prototype.hasOwnProperty.call(dump,key)) ds.push(key);
+      if (!Object.prototype.hasOwnProperty.call(dump, key)) ds.push(key);
     }
     for (const [key, value] of Object.entries(dump)) {
       target[key] = value;
@@ -360,7 +360,7 @@ class ViewDef {
     } else {
       // Check for skipped sequence number.
       if (m.seq != this._sequence + 1) {
-        throw { error: "Sequence Error" };
+        throw { error: "Sequence Error " + m.view + " " + m.seq + " current " + this._sequence };
       }
 
       this._sequence = m.seq;
@@ -469,6 +469,8 @@ export default class ObjectView {
   _connection = undefined;
 
   _views = {};
+
+  _rebinds = {};
 
   static View(view, cell) {
     return new ViewDef(view, cell);
@@ -682,10 +684,42 @@ export default class ObjectView {
     setTimeout(this.connect.bind(this), r);
   };
 
+  #doRebinds = function () {
+    for (const [name, seq] of Object.entries(this._rebinds)) {
+      let def = this._views[name];
+
+      if (def) {
+        if (def._sequence != seq) {
+          // Schedule a reconnect.
+          this.#registerView(def);
+        }
+      }
+    }
+    this._rebinds = {};
+  };
+
+  #rebind = function (m) {
+    let v = m.view;
+    if (v) {
+      // Request a rebind of this view only.
+      let c = m.cell;
+      let k = this.#getKey(v, c);
+
+      // We delay rebinding to avoid multiple requests for high update rate views.
+      this._rebinds[k] = m.seq;
+
+      var r = Math.floor(Math.random() * 1000) + 500;
+      setTimeout(this.#doRebinds.bind(this), r);
+    }
+    else {
+      this._rebinds = {};
+      this.#backoffConnect();
+    }
+  };
+
   #applyChanges = function (m) {
     if (m.type == "est") {
-      // This is an establish.  Schedule a reconnect.
-      this.#backoffConnect();
+      this.#rebind(m);
       return;
     }
 
@@ -700,25 +734,24 @@ export default class ObjectView {
     var k = this.#getKey(v, c);
     var def = this._views[k];
     if (!def) {
-      // Try mapping to shortcut site cell.
-      if (c == this._siteCell) {
-        k = this.#getKey(v, 'site');
-        def = this._views[k];
-      }
-    }
-    if (!def) {
-       // Try the empty cell.
-       k = this.#getKey(v);
-       def = this._views[k];
+      // Try the empty cell.
+      k = this.#getKey(v);
+      def = this._views[k];
     }
     if (!def) {
       return;
     }
 
-    def._applyChanges(m);
+    try {
+      def._applyChanges(m);
+    } catch (e) {
+      this.#rebind(m);
+    }
   };
 
   #getKey = function (view, cell) {
+    if (cell == this._siteCell) cell = "";
+    if (cell == "site") cell = "";
     return (view ?? "") + ":" + (cell ?? "");
   };
 
