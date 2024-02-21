@@ -646,11 +646,16 @@ export default class ObjectView {
     if (def._cell) params.Cell = def._cell;
     if (!def._target) params.WithoutDump = true;
 
+    // Skip regsiter view if already in progress.
+    if (def._registerInProgress) return;
+    def._registerInProgress = true;
+
     this._connection
       .invoke("RegisterView", params)
       .then(def._applyDump.bind(def))
-      .catch(this.#registerError.bind(this));
-
+      .catch(this.#registerError.bind(this))
+      .finally(() => def._registerInProgress = false);
+   
     this.#ensureFieldMap(def);
   };
 
