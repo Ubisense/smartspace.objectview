@@ -33,6 +33,7 @@
 
 import { HubConnectionState, HubConnectionBuilder } from '@microsoft/signalr';
 import { IdCreator } from './IdCreator.js';
+import packageInfo from '../package.json';
 
 const fallbackCell = '000004000000000000000000000:ULocation::Cell';
 
@@ -607,6 +608,10 @@ export default class ObjectView {
   async getFieldMap(params) {
     var res = await this._connection.invoke("Execute", "Get_Mapping", params);
     return JSON.parse(res);
+  }
+
+  getVersion() {
+    return packageInfo.version;
   }
 
   // Leave the field map of a view definition either set to the field map
