@@ -30,7 +30,7 @@ jobs:
           registry-url: https://npm.pkg.github.com/
       - run: npm ci
       - run: npm run build
-      - run: npm publish --dry-run
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
@@ -50,6 +50,6 @@ jobs:
       - run: npm ci
       - run: ./node_modules/.bin/json -I -f package.json -e 'this.publishConfig["@ubisense:registry"]="https://registry.npmjs.org/"'
       - run: npm run build
-      - run: npm publish --access=public --dry-run
+      - run: npm publish --access=public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
