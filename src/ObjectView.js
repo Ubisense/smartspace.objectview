@@ -490,9 +490,10 @@ export default class ObjectView {
    * Creates an instance of ObjectView.
    * @param {boolean|string} anonOrAddress Boolean true means allow anonymous accces, false means require authentication.
    * Otherwise you can pass a string to attempt to connect to a different hub.
+   * @param {object} Pass SignalR HttpConnectionOptions https://learn.microsoft.com/en-us/javascript/api/@microsoft/signalr/ihttpconnectionoptions
    * @memberof ObjectView
    */
-  constructor(anonOrAddress) {
+  constructor(anonOrAddress, connectionOptions = {}) {
 
     let hub;
     if (typeof anonOrAddress == "boolean") {
@@ -504,7 +505,7 @@ export default class ObjectView {
     }
 
     this._connection = new HubConnectionBuilder()
-      .withUrl(hub)
+      .withUrl(hub, connectionOptions)
       .build();
 
     // Create a function that the hub can call to send change messages.
