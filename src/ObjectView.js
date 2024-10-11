@@ -5,7 +5,7 @@
  * party and contributor rights, including patent rights, and no such rights
  * are granted under this license.
  *
- * Copyright (c) 2022, Ubisense Limited
+ * Copyright (c) 2024, Ubisense Limited
  *
  * All rights reserved.
  *
@@ -288,7 +288,14 @@ class ViewDef {
     return result;
   }
 
-  _applyDump(res) {
+  _applyDump(errorCallback, res) {
+    if (res.result.message != "OK")
+    {
+      // Error has occurred.
+      errorCallback(res.result.message, res.result.context);
+      return;
+    }
+
     if (res.contents) {
       const dump = JSON.parse(res.contents);
       this._sequence = dump.seq;
@@ -512,7 +519,7 @@ export default class ObjectView {
     this._connection.on("viewEvent", this.#viewEvent.bind(this));
 
     this._connection.onclose((err) => {
-      this.#reconnectError("Connection Closed", err);
+      this.#reconnectError("ConnectionClosed", err.message);
     });
   }
 
@@ -648,7 +655,7 @@ export default class ObjectView {
   };
 
   #registerView = function (def) {
-    const params = { View: def._view };
+    const params = { Version: 1, View: def._view };
     if (def._cell) params.Cell = def._cell;
     if (!def._target) params.WithoutDump = true;
 
@@ -656,10 +663,11 @@ export default class ObjectView {
     if (def._registerInProgress) return;
     def._registerInProgress = true;
 
+    var regError = this.#registerError.bind(this);
     this._connection
       .invoke("RegisterView", params)
-      .then(def._applyDump.bind(def))
-      .catch(this.#registerError.bind(this))
+      .then(def._applyDump.bind(def, regError))
+      .catch(regError)
       .finally(() => def._registerInProgress = false);
    
     this.#ensureFieldMap(def);
@@ -673,17 +681,15 @@ export default class ObjectView {
   };
 
   #registerError = function (error, reason) {
-    var e = error.message ?? error;
     if (this.#errorCallback) {
-      var r = error.reason ?? reason;
+      var { e, r } = this.#decodeError(error, reason);
       this.#errorCallback(e, r);
     }
   };
 
   #reconnectError = function (error, reason) {
-    var e = error.message ?? error;
     if (this.#errorCallback) {
-      var r = error.reason ?? reason;
+      var { e, r } = this.#decodeError(error, reason);
       this.#errorCallback(e, r);
     }
     this.#backoffConnect();
@@ -775,6 +781,24 @@ export default class ObjectView {
         this._siteCell = p.id;
       }
     }
+  };
+
+  #decodeError = function (error, reason) {
+    var e, r;
+    if (error instanceof Error) {
+      if (error.errorType) {
+        e = error.errorType;
+        r = error.message;
+      } else {
+        e = error;
+        r = reason;
+      }
+    }
+    else {
+      e = error.message ?? error;
+      r = error.reason ?? reason;
+    }
+    return { e, r };
   };
 }
 
