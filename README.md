@@ -35,7 +35,7 @@ Create an ObjectView instance, connect it, and then pass some ViewDef instances 
 ```
 
 ## Error Callback
-From SmartSpace 3.9 and ObjectView v1.0.18, the error callback arguments have been updated.  The error callback is called with two argments '(e, r)'.  The first is a string symbol indicating the error type, and the second is a variant argument with more information.  Here are the known error types:
+From SmartSpace 3.9 and ObjectView v1.0.18, the error callback arguments have been updated.  The error callback is called with two arguments '(e, r)'.  The first is a string symbol indicating the error type, and the second is a variant argument with more information.  Here are the known error types:
 
 | e           |	r       | Meaning |
 | --------------| ----------- | ------------- |
@@ -44,7 +44,7 @@ From SmartSpace 3.9 and ObjectView v1.0.18, the error callback arguments have be
 | UnknownView |	array of strings [ View ]  | Request to subscribe to a view which has not been defined in SmartSpace |
 | Unauthorized	| array of strings [ User, View ] | Request to subscribe to a view for which the current user does not have an authorized role |
 
-To get this full behaviour, the correct version of SmartSpace (3.9 or higher) must be installed on the server.  When connecting to an older version, ObjectView will still work, but the error callback will just receive HubException objects, and no way to distinguish UnknownView and Unauthorized.  The compatibility matrix between old and new versions of the client and server is as follows:
+To get this full behaviour, the correct version of SmartSpace (3.9 or higher) must be installed on the server.  When connecting to an older version, ObjectView will still work, but the error callback will still receive HubException objects, with no way to distinguish between UnknownView and Unauthorized.  The compatibility matrix between old and new versions of the client and server is as follows:
 
 | Server Version | Client Version | Behaviour |
 | --- | --- | --- |
