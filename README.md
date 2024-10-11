@@ -48,7 +48,7 @@ To get this full behaviour, the correct version of SmartSpace (3.9 or higher) mu
 
 | Server Version | Client Version | Behaviour |
 | --- | --- | --- |
-| <3.9 | <3.9 |HubExceptions for errors, passing exception text to error callback. |
-| <3.9 | >=3.9 | HubExceptions for errors, and client behaves as old version did, passing exception text to error callback. |
-| >=3.9 | <3.9 | Server behaves as old version, throwing HubExceptions for errors.  Client passes exception text to error callback. |
-| >=3.9 | >=3.9 | Server returns errors as results field, which client passes on, with message and context, to the error callback. |
+| <3.9 | <1.0.18 |HubExceptions for errors, passing exception text to error callback. |
+| <3.9 | >=1.0.18 | HubExceptions for errors, and client behaves as old version did, passing exception text to error callback. |
+| >=3.9 | <1.0.18 | Server behaves as old version, throwing HubExceptions for errors.  Client passes exception text to error callback. |
+| >=3.9 | >=1.0.18 | Server returns errors as results field, which client passes on, with message and context, to the error callback. |
