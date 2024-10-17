@@ -289,10 +289,11 @@ class ViewDef {
   }
 
   _applyDump(errorCallback, res) {
-    if (res.result.message != "OK")
+    let result = res.result || {};
+    if (result.message && (result.message != "OK"))
     {
       // Error has occurred.
-      errorCallback(res.result.message, res.result.context);
+      errorCallback(result.message, res.result.context);
       return;
     }
 
