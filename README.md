@@ -35,7 +35,7 @@ Create an ObjectView instance, connect it, and then pass some ViewDef instances 
 ```
 
 ## Error Callback
-From SmartSpace 3.9 and ObjectView v1.0.18, the error callback arguments have been updated.  The error callback is called with two arguments '(e, r)'.  The first is a string symbol indicating the error type, and the second is a variant argument with more information.  Here are the known error types:
+From SmartSpace 3.9 and ObjectView v1.0.19, the error callback arguments have been updated.  The error callback is called with two arguments '(e, r)'.  The first is a string symbol indicating the error type, and the second is a variant argument with more information.  Here are the known error types:
 
 | e           |	r       | Meaning |
 | --------------| ----------- | ------------- |
@@ -48,7 +48,7 @@ To get this full behaviour, the correct version of SmartSpace (3.9 or higher) mu
 
 | Server Version | Client Version | Behaviour |
 | --- | --- | --- |
-| <3.9 | <1.0.18 |HubExceptions for errors, passing exception text to error callback. |
-| <3.9 | >=1.0.18 | HubExceptions for errors, and client behaves as old version did, passing exception text to error callback. |
-| >=3.9 | <1.0.18 | Server behaves as old version, throwing HubExceptions for errors.  Client passes exception text to error callback. |
-| >=3.9 | >=1.0.18 | Server returns errors as results field, which client passes on, with message and context, to the error callback. |
+| <3.9 | <1.0.19 |HubExceptions for errors, passing exception text to error callback. |
+| <3.9 | >=1.0.19 | HubExceptions for errors, and client behaves as old version did, passing exception text to error callback. |
+| >=3.9 | <1.0.19 | Server behaves as old version, throwing HubExceptions for errors.  Client passes exception text to error callback. |
+| >=3.9 | >=1.0.19 | Server returns errors as results field, which client passes on, with message and context, to the error callback. |
