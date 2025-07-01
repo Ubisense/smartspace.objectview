@@ -47,10 +47,11 @@ class ViewDef {
   _sequence = undefined;
   _field_map = undefined;
   _owner = undefined;
-
-  constructor(view, cell) {
+  _withoutDump = undefined;
+  constructor(view, cell, withoutDump = false) {
     this._view = view;
     this._cell = this._normalizeCell(cell);
+    this._withoutDump = withoutDump;
   }
 
   setCell(cell) {
@@ -481,8 +482,8 @@ export default class ObjectView {
 
   _rebinds = {};
 
-  static View(view, cell) {
-    return new ViewDef(view, cell);
+  static View(view, cell, withoutDump = false) {
+    return new ViewDef(view, cell, withoutDump);
   }
 
   static update(view_target, id, values) {
@@ -656,9 +657,8 @@ export default class ObjectView {
   };
 
   #registerView = function (def) {
-    const params = { Version: 1, View: def._view };
+    const params = { Version: 1, View: def._view, WithoutDump: def._withoutDump};
     if (def._cell) params.Cell = def._cell;
-    if (!def._target) params.WithoutDump = true;
 
     // Skip regsiter view if already in progress.
     if (def._registerInProgress) return;
