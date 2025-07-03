@@ -47,12 +47,17 @@ class ViewDef {
   _sequence = undefined;
   _field_map = undefined;
   _owner = undefined;
+  _initialDump = undefined;
 
   constructor(view, cell) {
     this._view = view;
     this._cell = this._normalizeCell(cell);
   }
+  initialEstablish(initialDump) {
+    this._initialDump = initialDump;
+    return this;
 
+  }
   setCell(cell) {
     this._cell = this._normalizeCell(cell);
     return this;
@@ -658,7 +663,10 @@ export default class ObjectView {
   #registerView = function (def) {
     const params = { Version: 1, View: def._view };
     if (def._cell) params.Cell = def._cell;
-    if (!def._target) params.WithoutDump = true;
+    // Don't request dump data if no target is set or we have initial dump preference
+    if (!def._target || def._initialDump !== undefined) {
+      params.WithoutDump = def._initialDump !== undefined ? def._initialDump : true;
+    }
 
     // Skip regsiter view if already in progress.
     if (def._registerInProgress) return;
