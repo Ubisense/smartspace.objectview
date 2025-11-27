@@ -11,28 +11,41 @@ Create an ObjectView instance, connect it, and then pass some ViewDef instances 
 
 ```
     ...
-    this.objectView = new ObjectView()
-      .onError(this.onerror.bind(this))
-      .onConnected(this.onconnected.bind(this))
-      .connect()
-    objectView.subscribe(
-      ObjectView.View(
-        'ProductLocations',
-        '04007zVJX_LAzXz9000kum0005S:ULocation::Cell',
-      ).setTargetProperty(this, 'view'),
-    )
-    objectView.subscribe(
-      ObjectView.View('Products')
-        .setTargetProperty(this, 'products')
-        .onEstablish((v) => {
-          console.log('establish products', v)
-        }),
-    )
-    this.objectView.subscribe(
-      ObjectView.View('Workspaces').setTargetProperty(this, 'workspaces'),
-    )
+    try {
+      let ov = new ObjectView()
+        .onError(this.onerror.bind(this));
+      await ov.connectAsync();
+      this.objectView = ov;
+
+      // Use Promise.all to subscribe to multiple views concurrently
+      // and wait for them all to be ready.
+      await Promise.all([
+        ov.subscribe(
+          ObjectView.View(
+            'ProductLocations',
+            '04007zVJX_LAzXz9000kum0005S:ULocation::Cell',
+          ).setTargetProperty(this, 'view'),
+        ),
+        ov.subscribe(
+          ObjectView.View('Products')
+          .setTargetProperty(this, 'products')
+          .onEstablish((v) => {
+            console.log('establish products', v)
+          })
+        ),
+        ov.subscribe(
+          ObjectView.View('Workspaces').setTargetProperty(this, 'workspaces')
+        )
+      ]);
+    }
+    catch (e)
+    {
+      console.log(e);
+      ...
+    }
     ...
 ```
+Note that the connect() method still works, where you use callbacks to get connection results.  Similarly you can call subscribe without await, and receive errors in callbacks.
 
 ## Error Callback
 From SmartSpace 3.9 and ObjectView v1.0.19, the error callback arguments have been updated.  The error callback is called with two arguments '(e, r)'.  The first is a string symbol indicating the error type, and the second is a variant argument with more information.  Here are the known error types:

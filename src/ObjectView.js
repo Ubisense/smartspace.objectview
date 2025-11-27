@@ -428,7 +428,7 @@ class ViewDef {
 
           // Add to the view.
           if (this._prop) {
-            // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.  
+            // We do it this way so reactive systems such as Vue will pick up the new key and add reactivity.
             // This may not be necessary with Vue3 ref that have deep reactivity.
             let toAdd = {};
             toAdd[v._id] = doc;
@@ -543,6 +543,19 @@ export default class ObjectView {
     return this;
   }
 
+  // Async version of connect to allow code to await the connection.  May throw an error as an exception.
+  async connectAsync() {
+    if (this._connection.state === HubConnectionState.Connected) {
+      await this.#registerAll();
+      return this;
+    }
+
+    await this._connection.start();
+    await this.#registerAll();
+
+    return this;
+  }
+
   onError(cb) {
     this.#errorCallback = cb;
     return this;
@@ -553,11 +566,11 @@ export default class ObjectView {
     return this;
   }
 
-  subscribe(def) {
+  async subscribe(def) {
     var k = this.#getKey(def._view, def._cell);
     this._views[k] = def;
     if (this._connection.state === HubConnectionState.Connected) {
-      this.#registerView(def);
+      await this.#registerView(def);
     }
   }
 
@@ -631,11 +644,10 @@ export default class ObjectView {
   // Leave the field map of a view definition either set to the field map
   // retrieved from the server, or set to null (if the view is not an
   // updateable view)
-  #ensureFieldMap = function (view) {
-    view._field_map = undefined;
+  #ensureFieldMap = async function (view) {
     view._owner = this;
-    this.getFieldMap(view._view)
-      .then((res) => (view._field_map = res["field_map"]));
+    let res = await this.getFieldMap(view._view);
+    view._field_map = res["field_map"];
   };
 
   #viewEvent = function (view, message) {
@@ -655,12 +667,14 @@ export default class ObjectView {
     await this.#getSiteCell();
 
     // Register each view.
+    let promises = [];
     for (var v in this._views) {
-      this.#registerView(this._views[v]);
+      promises.push(this.#registerView(this._views[v]));
     }
+    await Promise.all(promises);
   };
 
-  #registerView = function (def) {
+  #registerView = async function (def) {
     const params = { Version: 1, View: def._view};
     if (def._cell) params.Cell = def._cell;
     // Don't request dump data if no target is set or we have initial dump preference
@@ -673,13 +687,21 @@ export default class ObjectView {
     def._registerInProgress = true;
 
     var regError = this.#registerError.bind(this);
-    this._connection
-      .invoke("RegisterView", params)
-      .then(def._applyDump.bind(def, regError))
-      .catch(regError)
-      .finally(() => def._registerInProgress = false);
+    try
+    {
+      var res = await this._connection.invoke("RegisterView", params);
+      def._applyDump.bind(def)(regError, res);
+    }
+    catch (e)
+    {
+      regError(e);
+    }
+    finally
+    {
+      def._registerInProgress = false;
+    }
    
-    this.#ensureFieldMap(def);
+    await this.#ensureFieldMap(def);
   };
 
   #deregisterView = function (def) {
